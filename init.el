@@ -131,7 +131,7 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
                       (and buffer-offer-save (> (buffer-size) 0)))))
           (setq modified-found t)))
       modified-found)))
-(add-to-list 'load-path "~/.emacs.d/inits")
+;;(add-to-list 'load-path "~/.emacs.d/inits")
 (leaf emacs
   :custom ((make-backup-files . nil)
            (indent-tabs-mode . nil)
@@ -194,8 +194,8 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
   (leaf *font
     :config
     (setq use-default-font-for-symbols nil)
-    (add-to-list 'default-frame-alist '(font . "Source Han Code JP-12"))
-    (set-face-attribute 'default nil :font "Source Han Code JP-12")
+    (add-to-list 'default-frame-alist '(font . "Source Han Code JP-10"))
+    (set-face-attribute 'default nil :font "Source Han Code JP-10")
     ;; (set-fontset-font t 'ascii (font-spec :family "Ricty Diminished" :size 14))
     ;; (set-fontset-font t 'japanese-jisx0208 (font-spec :family "Ricty Diminished"))
     (set-fontset-font t 'unicode (font-spec :family "Noto Sans CJK JP") nil 'append)))
