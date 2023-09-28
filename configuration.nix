@@ -193,7 +193,7 @@
       enable = true;
       package = (pkgs.emacsWithPackagesFromUsePackage {
         package = pkgs.emacs-pgtk;
-        config = ./.emacs.d/init.el;
+        config = ./init.el;
         extraEmacsPackages = epkgs: with epkgs; [
           use-package
           leaf
