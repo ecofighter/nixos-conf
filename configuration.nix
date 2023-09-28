@@ -2,6 +2,7 @@
 
 {
   imports = [
+    ./nix.nix
     ./cachix.nix
     "${modulesPath}/profiles/minimal.nix"
   ];
