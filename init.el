@@ -293,9 +293,10 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
     (etcc-on)))
 (leaf treemacs
   :ensure t
+  :hook (treemacs-mode-hook . (lambda () (display-line-numbers-mode -1)))
   :config
-  (add-hook 'treemacs-mode-hook
-            (lambda () (display-line-numbers-mode -1)))
+  ;; (add-hook 'treemacs-mode-hook
+  ;;           (lambda () (display-line-numbers-mode -1)))
   (leaf treemacs-evil
     :ensure t
     :after evil
@@ -315,10 +316,9 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
     :bind (:vertico-map (("C-h" . 'vertico-directory-up)))
     :global-minor-mode vertico-mode)
   (leaf embark
-    :ensure t
-    :bind
-    (("C-." . 'embark-act)
-     ("C-;" . 'embark-dwim)))
+    :config
+    (evil-leader/set-key
+      "e" 'embark-act))
   (leaf consult
     :ensure t
     :after vertico
