@@ -641,6 +641,9 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
     :config
     (evil-org-set-key-theme
      '(navigation insert textobjects additional calendar))))
+(leaf pdf-tools
+  :ensure t
+  :hook (pdf-view-mode-hook . (lambda () (display-line-numbers-mode -1))))
 ;; (require '30-yaml)
 ;; (require '30-emacslisp)
 ;; (require '30-common-lisp)
@@ -733,7 +736,16 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
       ;;  (auctex-cluttex-ClutTeX-command . '("ClutTeX" "cluttex.exe -e %(cluttexengine) %(cluttexbib) %(cluttexindex) %S %t" auctex-cluttex--TeX-run-ClutTeX nil
       ;;                                      (plain-tex-mode latex-mode)
       ;;                                      :help "Run ClutTeX")))
-      :hook ((LaTeX-mode-hook . auctex-cluttex-mode)))
+      :hook ((LaTeX-mode-hook . auctex-cluttex-mode))
+      :config
+      (defun my/run-after-compilation-finished-funcs (&rest args)
+        "run AUCTeX's TeX-after-compilation-finished-functions hook. Ignore all ARGS"
+        (unless TeX-error-list
+          (run-hook-with-args 'TeX-after-compilation-finished-functions
+                             (with-current-buffer TeX-command-buffer
+                               (expand-file-name
+                                (TeX-active-master (TeX-output-extension)))))))
+      (advice-add #'auctex-cluttex--TeX-ClutTeX-sentinel :after #'my/run-after-compilation-finished-funcs))
     (leaf *latex-lsp
       :disabled t
       :config
