@@ -13,12 +13,14 @@
     nativeSystemd = true;
     defaultUser = "haneta";
     startMenuLaunchers = true;
+    wslConf.network.generateHosts = true;
+    wslConf.network.generateResolvConf = true;
 
     # Enable native Docker support
     # docker-native.enable = true;
 
     # Enable integration with Docker Desktop (needs to be installed)
-    # docker-desktop.enable = true;
+    docker-desktop.enable = false;
   };
 
   # Enable nix flakes
@@ -42,6 +44,7 @@
     cachix
     bash
     nodePackages.bash-language-server
+    nodePackages.githubnext/github-copilot-cli
     file
     vim
     wget
@@ -60,6 +63,12 @@
     fsautocomplete
     (python3.withPackages(ps: with ps; [ epc orjson sexpdata six paramiko rapidfuzz ]))
   ];
+  fonts.packages = with pkgs; [
+    noto-fonts
+    noto-fonts-cjk
+    noto-fonts-emoji
+    source-han-code-jp
+  ];
   environment.sessionVariables = {
     LSP_USE_PLISTS = "true";
     SSH_AUTH_SOCK = ''$XDG_RUNTIME_DIR/ssh-agent.sock'';
@@ -77,15 +86,14 @@
     home.sessionPath = [
       "$HOME/.local/bin"
     ];
-    home.packages = [
-      pkgs.source-han-code-jp
-      pkgs.fzf
-      pkgs.zsh
-      pkgs.zsh-completions
-      pkgs.zsh-fzf-tab
-      pkgs.zsh-fzf-history-search
-      pkgs.deer
-      pkgs.zsh-fast-syntax-highlighting
+    home.packages = with pkgs; [
+      fzf
+      zsh
+      zsh-completions
+      zsh-fzf-tab
+      zsh-fzf-history-search
+      deer
+      zsh-fast-syntax-highlighting
     ];
     programs.zsh = {
       enable = true;
