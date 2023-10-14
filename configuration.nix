@@ -42,15 +42,29 @@
   environment.shells = with pkgs; [ bash zsh ];
   environment.systemPackages = with pkgs; [
     cachix
+    aspell
+    aspellDicts.en
+    aspellDicts.en-computers
+    aspellDicts.en-science
+    wl-clipboard
     bash
     nodePackages.bash-language-server
-    nodePackages.githubnext/github-copilot-cli
     file
     vim
     wget
     socat
     samba
+    rnix-lsp
     gcc
+    clang
+    gdb
+    lldb
+    clang-tools
+    cmake
+    bear
+    typescript
+    nodePackages.typescript-language-server
+    vscode-langservers-extracted
     rustc
     cargo
     rust-analyzer

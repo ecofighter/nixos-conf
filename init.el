@@ -136,6 +136,22 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
       modified-found)))
 ;;(add-to-list 'load-path "~/.emacs.d/inits")
 (leaf emacs
+  :init
+  ;; credit: yorickvP on Github
+  (defvar my/wl-copy-process nil)
+  (defun my/wl-copy (text)
+    (setq my/wl-copy-process (make-process :name "wl-copy"
+                                           :buffer nil
+                                           :command '("wl-copy" "-f" "-n")
+                                           :connection-type 'pipe))
+    (process-send-string my/wl-copy-process text)
+    (process-send-eof my/wl-copy-process))
+  (defun my/wl-paste ()
+    (if (and my/wl-copy-process (process-live-p my/wl-copy-process))
+        nil ; should return nil if we're the current paste owner
+      (shell-command-to-string "wl-paste -n | tr -d \r")))
+  (setq interprogram-cut-function #'my/wl-copy)
+  (setq interprogram-paste-function #'my/wl-paste)
   :custom ((make-backup-files . nil)
            (indent-tabs-mode . nil)
            (select-enable-clipboard . t)
@@ -143,7 +159,7 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
            (split-width-threshold . 80)
            (vc-handled-backends quote nil)
            (fill-column . 80)
-           (tab-width . 2)
+           (tab-width . 4)
            (truncate-lines . t)
            (truncate-partial-width-windows . t)
            (inhibit-startup-screen . t)
@@ -211,10 +227,10 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
            (equal system-name "waltraute")
            t)
     :after browse-url
-    :init
+    :config
     (defun my/browse-url-via-powershell (url &rest args)
-      (async-shell-command (concat "powershell.exe start " url)))
-    (custom-set-default browse-url-browser-function #'my/browse-url-via-powershell)))
+      (shell-command (concat "powershell.exe start \"" url "\"")))
+    (setf browse-url-browser-function #'my/browse-url-via-powershell)))
 (leaf exec-path-from-shell
   :ensure t
   :unless (equal system-type 'windows-nt)
@@ -356,6 +372,7 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
     :global-minor-mode marginalia-mode)
   (leaf orderless
     :ensure t
+    :require t
     :custom
     ((completion-styles . '(substring orderless basic))
      (completion-category-overrides . '((file (styles basic partial-completion)))))))
@@ -367,14 +384,21 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
     :hook (corfu-mode-hook . corfu-popupinfo-mode)
     :custom ((corfu-auto . t)
              (corfu-auto-delay . 0.3)
-             (corfu-auto-prefix . 3)))
+             (corfu-auto-prefix . 3)
+             (corfu-cycle . t))
+    :config
+    (leaf corfu-terminal
+      :ensure t
+      :after corfu
+      :hook (corfu-mode-hook . corfu-terminal-mode)))
   (leaf cape
     :ensure t
+    :require t
     :config
     (defvar my/merged-capf)
-    (let* ((noncachedfuns '(cape-dabbrev))
-           (cachedfuns '(cape-file cape-rfc1345))
-           (mergedfuns (cape-capf-nonexclusive (cape-capf-buster (cape-capf-super noncachedfuns)) (cape-capf-super cachedfuns))))
+    (let* ((noncachedfuns '(#'cape-dabbrev))
+           (cachedfuns '(#'cape-file #'cape-rfc1345 #'cape-tex))
+           (mergedfuns (eval `(cape-capf-super (cape-capf-buster (cape-capf-super ,@noncachedfuns)) (cape-capf-super ,@cachedfuns)))))
       (setq my/merged-capf mergedfuns)
       (add-to-list 'completion-at-point-functions my/merged-capf)))
   (leaf lsp-bridge
@@ -385,11 +409,16 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
                :build (:not compile))
     :ensure nil
     :defun global-lsp-bridge-mode
-    :init (global-lsp-bridge-mode)
-    :hook (lsp-bridge-mode-hook . (lambda () (corfu-mode -1)))
+    ;; :init (global-lsp-bridge-mode)
+    :hook ((lsp-bridge-mode-hook . (lambda () (corfu-mode -1)))
+           (LaTeX-mode-hook . lsp-bridge-mode))
     :custom ((lsp-bridge-tex-lsp-server . "digestif")
+             (lsp-bridge-c-lsp-server . "clangd")
              (acm-candidate-match-function . 'orderless-flex)
-             (acm-enable-copilot . nil))
+             (acm-enable-copilot . nil)
+             (lsp-bridge-multi-lang-server-mode-list . '(((python-mode python-ts-mode) . lsp-bridge-python-multi-lsp-server)
+                                                        ((qml-mode qml-ts-mode) . "qmlls_javascript")
+                                                        ((js-mode javascript-mode) . "typescript_eslint"))))
     :config
     (leaf *lsp-bridge-evil-state
       :after evil evil-leader
@@ -400,14 +429,21 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
     (leaf markdown-mode
       :ensure t))
   (leaf eglot
-    :disabled t
+    :disabled nil
     :ensure t
     :config
     (leaf flycheck-eglot
+      :disabled t
       :ensure t
       :after (flycheck eglot)
       :custom ((flycheck-eglot-exclusive . nil))
       :global-minor-mode global-flycheck-eglot-mode))
+  (leaf realgud
+    :ensure t
+    :config
+    (leaf realgud-lldb
+      :ensure t
+      :require t))
   (leaf lsp-mode
     :disabled t
     :ensure nil
@@ -421,7 +457,7 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
      (lsp-completion-provider . :capf)
      (lsp-modeline-diagnostics-scope . :file))
     :defun lsp-enable-which-key-integration
-    :defer-config
+    :config
     (leaf *lsp-keybinds
       :custom
       ((lsp-keymap-prefix . "C-c l"))
@@ -449,6 +485,10 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
       :after treemacs
       :config
       (add-hook 'lsp-mode-hook #'lsp-treemacs-sync-mode))))
+(leaf *aspell
+  :config
+  (leaf flycheck-aspell
+    :ensure t))
 (leaf shackle
   :ensure t
   :global-minor-mode shackle-mode
@@ -590,10 +630,11 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
     :blackout t)
   (leaf company-box
     :hook (company-mode-hook . company-box-mode)))
-
 ;; (require '20-yasnippet)
 ;; (require '20-flymake)
 ;; (require '20-flycheck)
+(leaf flymake
+  :ensure t)
 (leaf flycheck
   :ensure t)
 ;; (require '20-smartparens)
@@ -648,6 +689,16 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
   :ensure t
   :bind
   (("C-x g" . #'magit-status)))
+(leaf projectile
+  :ensure t
+  :hook ((prog-mode-hook . projectile-mode)
+         (text-mode-hook . projectile-mode))
+  :config
+  (leaf *projectile-evil-leader
+    :after evil-leader
+    :config
+    (evil-define-key 'normal 'projectile-mode-map
+      (kbd "SPC P") #'projectile-command-map)))
 ;; (require '20-google-translate)
 ;; (require '30-bison)
 ;; (require '30-cmake)
@@ -700,6 +751,16 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
 ;; (require '31-lsp)
 (leaf *languages
   :config
+  (leaf nix-mode
+    :ensure t)
+  (leaf *c/cpp
+    :ensure nil
+    :config
+    (leaf cmake-mode
+      :ensure t))
+  (leaf web-mode
+    :ensure t
+    :mode ("\\.csp\\'" "\\html\\'"))
   (leaf *elisp
     :ensure smartparens
     :require smartparens-config
