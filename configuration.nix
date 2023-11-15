@@ -16,12 +16,11 @@
     wslConf.network.generateHosts = true;
     wslConf.network.generateResolvConf = true;
 
-    # Enable native Docker support
-    # docker-native.enable = true;
-
     # Enable integration with Docker Desktop (needs to be installed)
     docker-desktop.enable = false;
   };
+  virtualisation.docker.enable = true;
+  services.fstrim.enable = true;
 
   # Enable nix flakes
   nix.package = pkgs.nixFlakes;
@@ -53,29 +52,30 @@
     vim
     wget
     socat
-    samba
     rnix-lsp
-    gcc
-    clang
-    gdb
-    lldb
-    clang-tools
-    cmake
-    bear
-    typescript
-    nodePackages.typescript-language-server
-    vscode-langservers-extracted
-    rustc
-    cargo
-    rust-analyzer
-    rustfmt
-    ghc
-    cabal-install
-    haskell-language-server
-    dotnet-runtime
-    dotnet-sdk
-    fsautocomplete
-    (python3.withPackages(ps: with ps; [ epc orjson sexpdata six paramiko rapidfuzz ]))
+    zip
+    #gcc
+    #clang
+    #gdb
+    #lldb
+    #clang-tools
+    #cmake
+    #bear
+    #typescript
+    #nodePackages.typescript-language-server
+    #vscode-langservers-extracted
+    #rustc
+    #cargo
+    #rust-analyzer
+    #rustfmt
+    #haskell.compiler.ghc96
+    #haskellPackages.cabal-install
+    #haskellPackages.haskell-language-server
+    #dotnet-runtime
+    #dotnet-sdk
+    #fsautocomplete
+    #sage
+    (python3.withPackages(ps: with ps; [ epc orjson sexpdata six paramiko rapidfuzz jupyterlab ]))
   ];
   fonts.packages = with pkgs; [
     noto-fonts
@@ -94,6 +94,7 @@
   users.users.haneta = {
     isNormalUser = true;
     shell = pkgs.zsh;
+    extraGroups = [ "docker" ];
   };
   home-manager.users.haneta = {
     home.stateVersion = "23.11";

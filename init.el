@@ -237,7 +237,8 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
   :require exec-path-from-shell
   :defun exec-path-from-shell-initialize
   :custom ((exec-path-from-shell-arguments . nil)
-           (exec-path-from-shell-check-startup-files . nil))
+           (exec-path-from-shell-check-startup-files . nil)
+           (exec-path-from-shell-variables . '("PATH" "MANPATH" "LD_LIBRARY_PATH")))
   :config
   ;;(add-to-list 'exec-path-from-shell-variables "CAML_LD_LIBRARY_PATH")
   (exec-path-from-shell-initialize))
@@ -300,7 +301,7 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
     (evil-leader/set-leader "<SPC>")
     (evil-leader/set-key "C-i" 'previous-buffer)
     (evil-leader/set-key "<backtab>" 'next-buffer)
-    (evil-leader/set-key "<SPC>" 'counsel-M-x)
+    (evil-leader/set-key "<SPC>" 'execute-extended-command)
     (evil-leader/set-key
       "q q" 'my/exit
       "q Q" 'save-buffers-kill-emacs
@@ -402,6 +403,7 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
       (setq my/merged-capf mergedfuns)
       (add-to-list 'completion-at-point-functions my/merged-capf)))
   (leaf lsp-bridge
+    :disabled t
     :straight (lsp-bridge
                :host github
                :repo "manateelazycat/lsp-bridge"
@@ -417,8 +419,8 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
              (acm-candidate-match-function . 'orderless-flex)
              (acm-enable-copilot . nil)
              (lsp-bridge-multi-lang-server-mode-list . '(((python-mode python-ts-mode) . lsp-bridge-python-multi-lsp-server)
-                                                        ((qml-mode qml-ts-mode) . "qmlls_javascript")
-                                                        ((js-mode javascript-mode) . "typescript_eslint"))))
+                                                         ((qml-mode qml-ts-mode) . "qmlls_javascript")
+                                                         ((js-mode javascript-mode) . "typescript_eslint"))))
     :config
     (leaf *lsp-bridge-evil-state
       :after evil evil-leader
@@ -431,6 +433,7 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
   (leaf eglot
     :disabled nil
     :ensure t
+    :custom ((eglot-autoshutdown . t))
     :config
     (leaf flycheck-eglot
       :disabled t
@@ -634,7 +637,11 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
 ;; (require '20-flymake)
 ;; (require '20-flycheck)
 (leaf flymake
-  :ensure t)
+  :ensure t
+  :config
+  (leaf flymake-diagnostic-at-point
+    :ensure t
+    :hook (flymake-mode-hook . flymake-diagnostic-at-point-mode)))
 (leaf flycheck
   :ensure t)
 ;; (require '20-smartparens)
@@ -734,6 +741,16 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
 (leaf pdf-tools
   :ensure t
   :hook (pdf-view-mode-hook . (lambda () (display-line-numbers-mode -1))))
+(leaf *docker
+  :config
+  (leaf docker
+    :ensure t)
+  (leaf lsp-docker
+    :ensure t)
+  (leaf docker-tramp
+    :ensure t)
+  (leaf dockerfile-mode
+    :ensure t))
 ;; (require '30-yaml)
 ;; (require '30-emacslisp)
 ;; (require '30-common-lisp)
@@ -847,7 +864,7 @@ Buffers that have 'buffer-offer-save' set to nil are ignored."
                                  (TeX-active-master (TeX-output-extension)))))))
       (advice-add #'auctex-cluttex--TeX-ClutTeX-sentinel :after #'my/run-after-compilation-finished-funcs))
     (leaf *latex-lsp
-      :disabled nil
+      :disabled t
       :config
       (add-hook 'LaTeX-mode-hook #'lsp-bridge-mode)
       (add-hook 'plain-TeX-mode-hook #'lsp-bridge-mode))))
